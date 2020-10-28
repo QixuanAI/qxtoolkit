@@ -116,7 +116,6 @@ class schedule:
 
 
 if __name__ == "__main__":
-    from __future__ import *
 
     count = 0
     def printjob(msg1, msg2):

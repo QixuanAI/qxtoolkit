@@ -1,3 +1,12 @@
+#! /usr/bin/env python
+'''
+Description: 
+FilePath: /calibratecameras/cvutils/graffiti.py
+Author: qxsoftware@163.com
+Date: 2020-10-26 15:13:20
+LastEditTime: 2020-10-30 18:54:36
+Refer to: https://github.com/QixuanAI
+'''
 import cv2
 from ._inner import *
 
@@ -43,6 +52,10 @@ class Graffiti:
     def subimage(self, subimg, img, elapsed, time):
         pass
 
+
+    def putText(img, text, org, fontFace=cv2.FONT_HERSHEY_DUPLEX,fontScale=1.,color=[0,0,255],):
+        img = cv2.putText(img, text, org, fontFace, fontScale, color, thickness=1, lineType=8, bottomLeftOrigin=False)
+        return img
 
 class EfficientMotionDecorator(MotionDecorator):
     """Multi-thread motion decorator"""

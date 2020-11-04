@@ -4,7 +4,7 @@ Description: A simple video recorder, support Windows and Linux.
 Requirments: opencv-python>=4.2.0.34, numpy
 Author: qxsoftware@163.com
 Date: 2020-10-14 08:29:17
-LastEditTime: 2020-11-03 18:06:14
+LastEditTime: 2020-11-04 16:29:06
 Refer to: https://github.com/QixuanAI
 '''
 
@@ -23,7 +23,40 @@ CODEC = {
     "lossless": ["HFYU", '.avi'],
 }
 
+class VideoCapture:
+    def __init__(self, cam_id):
+        if not self.__setup__(cam_id):
+            warn("[!]Can't open camera device " + str(cam_id))
+    
+    def isOpened(self):
+        return self.cap.isOpened()
+    
+    @property
+    def size(self):
+        return self.width, self.height
+        
+    @property
+    def FPS(self):
+        return self._fps
+    
+    def __setup__(self, cam_id):
+        try:
+            cap = cv2.VideoCapture(cam_id)
+            if cap.isOpened():
+                self.cap=cap
+                self._fps=cap.get(cv2.CAP_PROP_FPS)
+                self.width=cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                self.height=cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                return True
+            else:
+                raise RuntimeError("Can't open camera device " + str(cam_id))
+        except:
+            return False
 
+    def changeCamera(self, cam_id):
+        if not self.__setup__(cam_id):
+            warn("[!]Failed to change camera, can't open device " + str(cam_id))
+            
 class FakeWriter:
     def __init__(self, *args):
         pass
@@ -133,11 +166,9 @@ def get_media_folder():
     return pic, video
 
 
-def btnCallback(state, *data):
-    print(state, data)
-
-
-def init_window(title, fixed: bool, width, height, text="Initialing Camera..."):
+def init_window(title, fixed: bool, width, height, cam_ids, cam_idx, text="Initialing Camera..."):
+    def changeCamera(cam_idx):
+        print(cam_idx, cam_ids[cam_idx])
     welcom = np.zeros((height, width, 3), dtype=np.uint8)
     font = cv2.FONT_HERSHEY_DUPLEX
     (tw, th), _ = cv2.getTextSize(text, font, 1, 1)
@@ -147,8 +178,8 @@ def init_window(title, fixed: bool, width, height, text="Initialing Camera..."):
     win_flag |= cv2.WINDOW_AUTOSIZE if fixed else cv2.WINDOW_NORMAL
     cv2.namedWindow(title, win_flag)
     cv2.resizeWindow(title, width, height)
-    cv2.createButton('btnname', btnCallback, None,
-                     cv2.QT_PUSH_BUTTON | cv2.QT_NEW_BUTTONBAR)
+    cv2.createTrackbar("Change Camera:", title, cam_idx,
+                       len(cam_ids)-1, changeCamera)
     cv2.imshow(title, welcom)
     cv2.waitKey(1000)
     return True
@@ -186,7 +217,8 @@ def main(args):
         out = FakeWriter()
         itval = int(1000/fps if itval == 0 else itval)
     try:
-        init_window(WIN_NAME, args.fixedsize, *get_proper_size(cam_w, cam_h))
+        init_window(WIN_NAME, args.fixedsize, *
+                    get_proper_size(cam_w, cam_h), cam_ids, 0)
         while cap.isOpened():
             ret, frame = cap.read()
             if ret and frame.shape > (0, 0):
@@ -208,11 +240,14 @@ def main(args):
                     cap = new_cap
                     cv2.destroyWindow(WIN_NAME)
                     WIN_NAME = "Cam {} | Press h for help".format(cam_id)
-                    init_window(WIN_NAME, args.fixedsize, *get_proper_size(cam_w, cam_h))
-                    cv2.displayOverlay(WIN_NAME, "Change to camera " + str(new_id), 2000)
+                    init_window(WIN_NAME, args.fixedsize, *
+                                get_proper_size(cam_w, cam_h), cam_ids, pressed-ord('0'))
+                    cv2.displayOverlay(
+                        WIN_NAME, "Change to camera " + str(new_id), 2000)
                 else:
-                    cv2.displayOverlay(WIN_NAME, "Fail to change camera " + str(new_id), 2000)
-                    
+                    cv2.displayOverlay(
+                        WIN_NAME, "Fail to change camera " + str(new_id), 2000)
+
             elif pressed == ord('h'):
                 cv2.displayOverlay(WIN_NAME, HELP_MSG, 5000)
             elif pressed == ord('s'):

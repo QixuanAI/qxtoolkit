@@ -4,7 +4,7 @@ Description: A simple video recorder, support Windows and Linux.
 Requirments: opencv-python>=4.2.0.34, numpy
 Author: qxsoftware@163.com
 Date: 2020-10-14 08:29:17
-LastEditTime: 2020-11-04 16:29:06
+LastEditTime: 2020-11-05 11:15:43
 Refer to: https://github.com/QixuanAI
 '''
 
@@ -17,36 +17,41 @@ from pathlib import Path
 from warnings import warn
 from datetime import datetime
 
+VERSION = "1.0.0"
+
 CODEC = {
     "small": ["mp4v", '.mp4'],
     "normal": ["DIVX", '.avi'],
     "lossless": ["HFYU", '.avi'],
 }
 
+WIN_NAME = "Press h for help"
+
+
 class VideoCapture:
     def __init__(self, cam_id):
         if not self.__setup__(cam_id):
             warn("[!]Can't open camera device " + str(cam_id))
-    
+
     def isOpened(self):
-        return self.cap.isOpened()
-    
+        return self.cam.isOpened()
+
+    def read(self):
+        return self.cam.read()
+
     @property
-    def size(self):
+    def shape(self):
         return self.width, self.height
-        
-    @property
-    def FPS(self):
-        return self._fps
-    
+
     def __setup__(self, cam_id):
         try:
-            cap = cv2.VideoCapture(cam_id)
-            if cap.isOpened():
-                self.cap=cap
-                self._fps=cap.get(cv2.CAP_PROP_FPS)
-                self.width=cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-                self.height=cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            cam = cv2.VideoCapture(cam_id)
+            if cam.isOpened():
+                self.cam = cam
+                self.ID = cam_id
+                self.FPS = cam.get(cv2.CAP_PROP_FPS)
+                self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+                self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 return True
             else:
                 raise RuntimeError("Can't open camera device " + str(cam_id))
@@ -54,9 +59,14 @@ class VideoCapture:
             return False
 
     def changeCamera(self, cam_id):
+        if cam_id == self.ID:
+            return True
         if not self.__setup__(cam_id):
             warn("[!]Failed to change camera, can't open device " + str(cam_id))
-            
+            return False
+        return True
+
+
 class FakeWriter:
     def __init__(self, *args):
         pass
@@ -102,11 +112,11 @@ def get_camera_ids(candidate_ids=[]):
             candidate_ids = list(range(20))
     for d in candidate_ids:
         try:
-            cap = cv2.VideoCapture(d)
-            if cap.isOpened():
+            cam = cv2.VideoCapture(d)
+            if cam.isOpened():
                 available_ids.append(d)
         finally:
-            cap.release()
+            cam.release()
     return available_ids
 
 
@@ -166,9 +176,13 @@ def get_media_folder():
     return pic, video
 
 
-def init_window(title, fixed: bool, width, height, cam_ids, cam_idx, text="Initialing Camera..."):
+def init_window(fixed: bool, size, cam: VideoCapture, cam_ids, cam_idx, text="Initialing Camera..."):
     def changeCamera(cam_idx):
-        print(cam_idx, cam_ids[cam_idx])
+        if cam.changeCamera(cam_ids[cam_idx]):
+            title = "Cam {} | {}".format(cam.ID, WIN_NAME)
+            cv2.setWindowTitle(WIN_NAME, title)
+
+    width, height = size
     welcom = np.zeros((height, width, 3), dtype=np.uint8)
     font = cv2.FONT_HERSHEY_DUPLEX
     (tw, th), _ = cv2.getTextSize(text, font, 1, 1)
@@ -176,36 +190,38 @@ def init_window(title, fixed: bool, width, height, cam_ids, cam_idx, text="Initi
     welcom = cv2.putText(welcom, text, org, font, 1, (192, 168, 31), 1)
     win_flag = cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED
     win_flag |= cv2.WINDOW_AUTOSIZE if fixed else cv2.WINDOW_NORMAL
-    cv2.namedWindow(title, win_flag)
-    cv2.resizeWindow(title, width, height)
-    cv2.createTrackbar("Change Camera:", title, cam_idx,
+    cv2.namedWindow(WIN_NAME, win_flag)
+    title = "Cam {} | {}".format(cam.ID, WIN_NAME)
+    cv2.setWindowTitle(WIN_NAME, title)
+    cv2.resizeWindow(WIN_NAME, *size)
+    cv2.createTrackbar("Change Camera:", WIN_NAME, cam_idx,
                        len(cam_ids)-1, changeCamera)
-    cv2.imshow(title, welcom)
+    cv2.imshow(WIN_NAME, welcom)
     cv2.waitKey(1000)
     return True
 
 
 def main(args):
     cam_ids = get_camera_ids(args.cam_ids)
+    if not cam_ids:
+        raise RuntimeError("Can't find any available cameras.")
     cam_id = cam_ids[0]
     itval = int(args.interval)
-    WIN_NAME = "Cam {} | Press h for help".format(cam_id)
     HELP_MSG = "Keyboard shortcuts:\nq - quit\ns - save picture" + \
         "\n0~{} - Change camera device\n\n".format(min(9, len(cam_ids))) +\
         "h - Show this help"
-    cap = cv2.VideoCapture(cam_id)
-    if not cap.isOpened():
+    cam = VideoCapture(cam_id)
+    if not cam.isOpened():
         raise RuntimeError("Can't open camera, device id: %d" % cam_id)
-    fps = cap.get(cv2.CAP_PROP_FPS) if itval == 0 else 1000/itval
-    cam_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    cam_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cam.FPS if itval == 0 else 1000/itval
+    cam_w, cam_h = cam.shape
 
     if args.record:
         saveto = Path(args.saveto)
         fourcc, suffix = CODEC[args.quality]
         if not saveto.suffix:  # Suppose to be a dictionary
             saveto = saveto / "VID_cam{}_{}{}".format(
-                cam_id, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix)
+                cam.ID, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix)
         elif saveto.suffix != suffix:
             warn("Fourcc codec '" + fourcc + "' does't match suffix " + path.suffix +
                  ", change save path to" + path.with_suffix(suffix))
@@ -217,33 +233,39 @@ def main(args):
         out = FakeWriter()
         itval = int(1000/fps if itval == 0 else itval)
     try:
-        init_window(WIN_NAME, args.fixedsize, *
-                    get_proper_size(cam_w, cam_h), cam_ids, 0)
-        while cap.isOpened():
-            ret, frame = cap.read()
+        init_window(args.fixedsize, get_proper_size(
+            cam_w, cam_h), cam, cam_ids, 0)
+        while cam.isOpened():
+            ret, frame = cam.read()
             if ret and frame.shape > (0, 0):
                 if args.flip:
                     frame = cv2.flip(frame, 1)
                 cv2.imshow(WIN_NAME, frame)
             else:
-                warn("[!]No responding from camera " + str(cam_id))
+                warn("[!]No responding from camera " + str(cam.ID))
                 continue
             out.write(frame)
             pressed = cv2.waitKey(itval)
+            # Close Button Clicked
+            if cv2.getWindowProperty(WIN_NAME, cv2.WND_PROP_VISIBLE) < 1:
+                break
             if pressed == ord('q'):
                 break
             elif 0 <= pressed-ord('0') < min(10, len(cam_ids)):
                 new_id = cam_ids[pressed-ord('0')]
-                new_cap = cv2.VideoCapture(new_id)
-                if new_cap.isOpened():
-                    cam_id = new_id
-                    cap = new_cap
-                    cv2.destroyWindow(WIN_NAME)
-                    WIN_NAME = "Cam {} | Press h for help".format(cam_id)
-                    init_window(WIN_NAME, args.fixedsize, *
-                                get_proper_size(cam_w, cam_h), cam_ids, pressed-ord('0'))
+                if new_id == cam.ID:
                     cv2.displayOverlay(
-                        WIN_NAME, "Change to camera " + str(new_id), 2000)
+                        WIN_NAME, "Already camra "+str(new_id), 2000)
+                elif cam.changeCamera(new_id):
+                    # cv2.destroyWindow(WIN_NAME)
+                    new_title = "Cam {} | {}".format(cam.ID, WIN_NAME)
+                    cv2.setWindowTitle(WIN_NAME, new_title)
+                    # init_window(WIN_NAME, args.fixedsize, get_proper_size(
+                    #     cam_w, cam_h), cam, cam_ids, pressed-ord('0'))
+                    cv2.setTrackbarPos(
+                        "Change Camera:", WIN_NAME, pressed-ord('0'))
+                    cv2.displayOverlay(
+                        WIN_NAME, "Change to camera " + str(cam.ID), 2000)
                 else:
                     cv2.displayOverlay(
                         WIN_NAME, "Fail to change camera " + str(new_id), 2000)
@@ -282,4 +304,10 @@ if __name__ == "__main__":
                         help='Flip video around vertical axes.')
     parser.add_argument('-s', '--fixedsize', action='store_true',
                         help='Fixed preview windows in original size rather than fit the screen.')
-    main(parser.parse_args())
+    parser.add_argument('-V', '--version',
+                        action='store_true', help="Show version.")
+    args = parser.parse_args()
+    if args.version:
+        print(VERSION)
+        exit()
+    main(args)

@@ -10,9 +10,8 @@ import numpy as np
 import os
 import glob
 import re
-from time import sleep
+from datetime import datetime
 from _inner import *
-from static_decorator import StaticDecorator
 
 
 class ImagesGetter(object):
@@ -44,15 +43,15 @@ class ImagesGetter(object):
         self.autorelease = autorelease
         self._out_count = 0
         self._is_end = lambda: True
-        self.reset()
+        self._adjust = []
+        self.scale = scale
         if abs(scale) > 1:
-            self._scale = lambda img: cv2.resize(
-                img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+            self._adjst.append(lambda img: cv2.resize(
+                img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC))
         elif 0 < abs(scale) < 1:
-            self._scale = lambda img: cv2.resize(
-                img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-        else:
-            self._scale = lambda img: img
+            self._adjst.append(lambda img: cv2.resize(
+                img, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA))
+        self.reset()
 
     @property
     def isAvailable(self) -> bool:
@@ -92,7 +91,8 @@ class ImagesGetter(object):
     def __call__(self) -> np.ndarray:
         while self.isAvailable:
             img = self._next(self.interval)
-            img = self._scale(img)
+            for adj in self._adjust:
+                img = adj(img)
             self._out_count += 1
             yield img
         if self.autorelease:
@@ -119,11 +119,9 @@ class ImagesGetter(object):
                 ret, frame = self.cap.read()
             return frame if ret else None
 
-        def _init_read(waitSec=2):
-            if self._out_count < 1:
-                ret, frame = self.cap.read()
-                return frame if ret else None
-            sleep(waitSec)
+        def _init_read(interval=0, waitSec=0.5):
+            if (datetime.now()-self._init_time).seconds < waitSec:
+                return self.welcome
             ret, frame = self.cap.read()
             self._next = _next
             return frame if ret else None
@@ -131,6 +129,16 @@ class ImagesGetter(object):
         self.cap = cv2.VideoCapture(int(device))
         if not self.cap.isOpened():
             report(WARNING, "Can't open camera device " + str(device))
+        self.width = int(self.scale * self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.scale*self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.welcome = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        text = "Initiling Camera..."
+        font = cv2.FONT_HERSHEY_DUPLEX
+        (tw, th), _ = cv2.getTextSize(text, font, 1, 1)
+        org = ((self.width-tw)//2, (self.height+th)//2)
+        self.welcome = cv2.putText(
+            self.welcome, text, org, font, 1, (192, 168, 31), 1)
+
         # If warm_up is set to -1, we will try 1000 times to get a stable stream from camera.
         # If we can cap 5 pictures consecutively, the stream can be regarded as stable.
         warmup_num = 1000 if warmup_num < 0 else warmup_num
@@ -146,6 +154,7 @@ class ImagesGetter(object):
         del test_pics
         self.len = float('inf')
         self._fps = lambda: self.cap.get(cv2.CAP_PROP_FPS)
+        self._init_time = datetime.now()
         self._next = _init_read if warmup_num > 0 else _next
         self._is_end = lambda: False
         self._release = self.cap.release
@@ -160,9 +169,12 @@ class ImagesGetter(object):
         self.cap = cv2.VideoCapture(file)
         if not self.cap.isOpened():
             report(WARNING, "Can't open video file " + str(file))
+        self.width = int(self.scale * cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.scale*cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.crt_idx = 0
         self._fps = lambda: self.cap.get(cv2.CAP_PROP_FPS)
         self.len = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        self._init_time = datetime.now()
         self._next = _next
         self._is_end = lambda: self.crt_idx >= self.len
         self._release = lambda: self.cap.release
@@ -182,9 +194,11 @@ class ImagesGetter(object):
                 imgs.extend(glob.glob(os.path.join(dir, '*'+ext)))
         if len(imgs) == 0:
             report(WARNING, "Can't find any images in " + str(dir))
+        self.width, self.height = None, None
         self.crt_idx = 0
         self.len = len(imgs)
         self._fps = lambda: -1.
+        self._init_time = datetime.now()
         self._next = _next
         self._is_end = lambda: self.crt_idx >= self.len
         self._release = lambda: None
@@ -192,17 +206,14 @@ class ImagesGetter(object):
 
 if __name__ == "__main__":
     import sys
-    getter = ImagesGetter('cal.mp4', cam_warmup=-1)
+    getter = ImagesGetter(9, cam_warmup=0)
     cv2.namedWindow('press q to quit', cv2.WINDOW_NORMAL)
 
-    def printf(state, *args):
-        print(state, '\ntake a pic\n')
-    # cv2.createButton('cap', printf, 'userdata', cv2.QT_PUSH_BUTTON)
     for i, img in enumerate(getter()):
         if img is None:
             print(i, ' - None to show')
             continue
         print(i, end='\r')
         cv2.imshow('press q to quit', img)
-        if cv2.waitKey(getter.frameDelay-10) == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break

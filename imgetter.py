@@ -130,7 +130,7 @@ class ImagesGetter(object):
         if not self.cap.isOpened():
             report(WARNING, "Can't open camera device " + str(device))
         self.width = int(self.scale * self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.scale*self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.height = int(self.scale * self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.welcome = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         text = "Initiling Camera..."
         font = cv2.FONT_HERSHEY_DUPLEX
@@ -165,12 +165,13 @@ class ImagesGetter(object):
                 self.crt_idx += interval
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.crt_idx)
             ret, frame = self.cap.read()
+            self.crt_idx += 1
             return frame if ret else None
         self.cap = cv2.VideoCapture(file)
         if not self.cap.isOpened():
             report(WARNING, "Can't open video file " + str(file))
-        self.width = int(self.scale * cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.scale*cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.width = int(self.scale * self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.scale * self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.crt_idx = 0
         self._fps = lambda: self.cap.get(cv2.CAP_PROP_FPS)
         self.len = self.cap.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -206,7 +207,7 @@ class ImagesGetter(object):
 
 if __name__ == "__main__":
     import sys
-    getter = ImagesGetter(9, cam_warmup=0)
+    getter = ImagesGetter(0, cam_warmup=0)
     cv2.namedWindow('press q to quit', cv2.WINDOW_NORMAL)
 
     for i, img in enumerate(getter()):

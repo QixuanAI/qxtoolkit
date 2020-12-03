@@ -2,8 +2,16 @@ from timeit import default_timer as now
 import os
 from enum import Enum, unique
 
+__all__ = ["VIDEO_EXT", "IMG_EXT", "FOURCC_CODEC", "FATAL_ERROR", "ERROR", "WARNING",
+           "INFOMATION", "IGNORE", "colors", "report", "chronograph"]
+
 VIDEO_EXT = ('.mp4', '.avi', '.mpg', '.mpeg', '.mov')
 IMG_EXT = ('.jpg', '.jpeg', '.jpe', '.png', '.bmp', '.dib', '.tif', '.tiff')
+FOURCC_CODEC = {
+    "small": ["mp4v", '.mp4'],
+    "normal": ["DIVX", '.avi'],
+    "lossless": ["HFYU", '.avi'],
+}
 
 # Error level
 FATAL_ERROR = 4
@@ -18,6 +26,7 @@ IGNORE = 0
 # ERR_LEVEL_WARN = 4  # Onle deal with WARNING.
 # ERR_LEVEL_INFO = 8  # Only deal with INFOMATION.
 # ERR_LEVEL_ALL = 16  # Deal with all things.
+
 
 @unique
 class colors(Enum):
@@ -49,9 +58,8 @@ def report(err, msg, err_level_adj=None):
 # from datetime import datetime
 
 
-
 class chronograph:
-    status=Enum('status',('init','start','pause','finish','stop'))
+    status = Enum('status', ('init', 'start', 'pause', 'finish', 'stop'))
 
     # class status(Enum):
     #     init = 0

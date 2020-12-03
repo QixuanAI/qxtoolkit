@@ -4,7 +4,7 @@ Description: A simple video recorder, support Windows and Linux.
 Requirments: opencv-python>=4.2.0.34, numpy
 Author: qxsoftware@163.com
 Date: 2020-10-14 08:29:17
-LastEditTime: 2020-11-05 11:15:43
+LastEditTime: 2020-12-03 09:57:00
 Refer to: https://github.com/QixuanAI
 '''
 
@@ -17,6 +17,9 @@ from pathlib import Path
 from warnings import warn
 from datetime import datetime
 
+__all__=["cam_record","parse_args","VERSION"]
+
+
 VERSION = "1.0.0"
 
 CODEC = {
@@ -26,6 +29,36 @@ CODEC = {
 }
 
 WIN_NAME = "Press h for help"
+
+
+def get_media_folder():
+    """Return system default picture and video folder"""
+    pic, video = "Pictures", "Videos"
+    if sys.platform == 'linux':
+        with open(Path.home()/'.config/user-dirs.dirs') as f:
+            for i in f.readlines():
+                i = i.strip()
+                if i.startswith('XDG_PICTURES_DIR'):
+                    pic = i.split('=')[-1].strip("\"'").replace('$HOME', '~')
+                elif i.startswith('XDG_VIDEOS_DIR'):
+                    video = i.split('=')[-1].strip("\"'").replace('$HOME', '~')
+    elif sys.platform == 'win32':
+        import re
+        import winreg
+        keys = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders')
+        pic = winreg.QueryValueEx(keys, 'My Pictures')[0]
+        video = winreg.QueryValueEx(keys, 'My Video')[0]
+        for name in re.findall('%([^%]+)%', pic):
+            pic = pic.replace("%"+name+"%", os.environ[name])
+        for name in re.findall('%([^%]+)%', video):
+            video = video.replace("%"+name+"%", os.environ[name])
+    pic = Path(pic).expanduser().resolve()
+    video = Path(video).expanduser().resolve()
+    return pic, video
+
+
+PICTURE, VIDEO = get_media_folder()
 
 
 class VideoCapture:
@@ -148,34 +181,6 @@ def get_proper_size(cam_w, cam_h):
     return pro_w, pro_h
 
 
-def get_media_folder():
-    """Return system default picture and video folder"""
-    import sys
-    pic, video = "Pictures", "Videos"
-    if sys.platform == 'linux':
-        with open(Path.home()/'.config/user-dirs.dirs') as f:
-            for i in f.readlines():
-                i = i.strip()
-                if i.startswith('XDG_PICTURES_DIR'):
-                    pic = i.split('=')[-1].strip("\"'").replace('$HOME', '~')
-                elif i.startswith('XDG_VIDEOS_DIR'):
-                    video = i.split('=')[-1].strip("\"'").replace('$HOME', '~')
-    elif sys.platform == 'win32':
-        import re
-        import winreg
-        keys = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders')
-        pic = winreg.QueryValueEx(keys, 'My Pictures')[0]
-        video = winreg.QueryValueEx(keys, 'My Video')[0]
-        for name in re.findall('%([^%]+)%', pic):
-            pic = pic.replace("%"+name+"%", os.environ[name])
-        for name in re.findall('%([^%]+)%', video):
-            video = video.replace("%"+name+"%", os.environ[name])
-    pic = Path(pic).expanduser().resolve()
-    video = Path(video).expanduser().resolve()
-    return pic, video
-
-
 def init_window(fixed: bool, size, cam: VideoCapture, cam_ids, cam_idx, text="Initialing Camera..."):
     def changeCamera(cam_idx):
         if cam.changeCamera(cam_ids[cam_idx]):
@@ -201,7 +206,7 @@ def init_window(fixed: bool, size, cam: VideoCapture, cam_ids, cam_idx, text="In
     return True
 
 
-def main(args):
+def cam_record(args):
     cam_ids = get_camera_ids(args.cam_ids)
     if not cam_ids:
         raise RuntimeError("Can't find any available cameras.")
@@ -283,10 +288,7 @@ def main(args):
         cv2.destroyAllWindows()
 
 
-PICTURE, VIDEO = get_media_folder()
-
-
-if __name__ == "__main__":
+def parse_args():
     DEFAULT_SAVE_TO = VIDEO
     parser = argparse.ArgumentParser(
         description='A Simple Video VideoWriter with Camera, support Windows and Linux.')
@@ -306,8 +308,12 @@ if __name__ == "__main__":
                         help='Fixed preview windows in original size rather than fit the screen.')
     parser.add_argument('-V', '--version',
                         action='store_true', help="Show version.")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
     if args.version:
         print(VERSION)
         exit()
-    main(args)
+    cam_record(args)

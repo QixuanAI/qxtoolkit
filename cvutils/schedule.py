@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 now = datetime.now
 
+__all__=["schedule"]
 
 class Job:
 

@@ -4,13 +4,14 @@ Description:
 FilePath: /cvutils/cvutils/graffiti.py
 Author: qxsoftware@163.com
 Date: 2020-10-26 15:13:20
-LastEditTime: 2020-12-03 09:55:08
+LastEditTime: 2020-12-03 10:12:30
 Refer to: https://github.com/QixuanAI
 '''
 import cv2
 from ._inner import *
 
-__all__=["Graffiti"]
+__all__=["Graffiti","MotionGraffiti"]
+"""Still on working"""
 
 class Graffiti:
 
@@ -58,6 +59,6 @@ class Graffiti:
         img = cv2.putText(img, text, org, fontFace, fontScale, color, thickness=1, lineType=8, bottomLeftOrigin=False)
         return img
 
-class EfficientMotionDecorator(MotionDecorator):
-    """Multi-thread motion decorator"""
+class MotionGraffiti(Graffiti):
+    """Multi-thread motion graffiti"""
     pass

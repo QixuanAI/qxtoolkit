@@ -4,7 +4,7 @@ Description:
 FilePath: /cvutils/cvutils/gen_samples.py
 Author: qxsoftware@163.com
 Date: 2020-10-30 14:16:55
-LastEditTime: 2020-12-03 09:41:17
+LastEditTime: 2020-12-14 20:00:35
 Refer to: https://github.com/QixuanAI
 '''
 import os
@@ -14,18 +14,22 @@ import numpy as np
 from pathlib import Path
 from warnings import warn
 from datetime import datetime
-from matplotlib import pyplot as plt
+from ._inner import FOURCC_CODEC
 
 __all__=["gen_gray_level_calib_imgs","gen_rgb_level_calib_imgs"]
 
 
-def gen_gray_level_calib_imgs(bits=8):
+def _get_param(bits,channel):
     maxval = 1 << bits
-    shape = (maxval, maxval, 1)
+    shape = (maxval, maxval, channel)
     if bits == 8:
         dtype = np.uint8
     elif bits == 16:
         dtype = np.uint16
+    return maxval,shape,dtype
+
+def gen_gray_level_calib_imgs(bits=8):
+    maxval,shape,dtype=_get_param(bits,1)
     for i in range(maxval):
         img = np.full(shape, i, dtype=dtype)
         yield img
@@ -57,12 +61,7 @@ def gen_gray_level_calib_imgs(bits=8):
 
 
 def gen_rgb_level_calib_imgs(bits=8):
-    maxval = 1 << bits
-    shape = (maxval, maxval, 3)
-    if bits == 8:
-        dtype = np.uint8
-    elif bits == 16:
-        dtype = np.uint16
+    maxval,shape,dtype = _get_param(bits,3)
     for c in (0, 1, 2):
         img = np.zeros(shape, dtype=dtype)
         for i in range(maxval):
@@ -100,10 +99,38 @@ def gen_rgb_level_calib_imgs(bits=8):
             img[:, maxval-i*2-1, c] = maxval-1
             img[maxval-i*2-1, :, c] = maxval-1
 
+from matplotlib import pyplot as plt
+def gen_rgb_spiral_curve_imgs(bits=8):
+    # todo
+    # 绘制等角螺线
+    maxval,shape,dtype = _get_param(bits,3)
+    center=(shape[0]//2,shape[1]//2) # 中心坐标
+    angle=np.radians(75) # 螺线固定角度，大于90度为顺时针，小于为逆时针
+    circle_num=4 # 圈数
+    for phase in range(10): # 初始相位
+        # 极坐标
+        theta=np.linspace(0,circle_num*2*np.pi,361)+phase*2*np.pi # 角度
+        r=angle*np.exp(theta/np.tan(angle)) # 距离
+        # 极坐标转直角坐标
+        x=r*np.cos(theta)+center[0]
+        y=r*np.sin(theta)-center[1]
+        img=np.zeros(shape, dtype=dtype)
+        plt.plot(x,y)
+        plt.show()
+        # r,g,b=255,255,255
+        # pts=np.stack((x.astype(np.int),y.astype(np.int)),-1)
+        # img=cv2.polylines(img,[pts],False,(r,g,b),thickness=10)
+        yield img
 
 if __name__ == "__main__":
     import sys
-    getter = gen_gray_level_calib_imgs
+    getter = gen_rgb_spiral_curve_imgs
+    delay=1
+    save=False
+    if save:
+        path="sample.mp4"
+        fourcc=cv2.VideoWriter_fourcc(*FOURCC_CODEC["small"][0])
+        out=cv2.VideoWriter(path,fourcc,25,(256,256))
     cv2.namedWindow('press q to quit', cv2.WINDOW_NORMAL)
     for i, img in enumerate(getter(bits=8)):
         if img is None:
@@ -111,5 +138,9 @@ if __name__ == "__main__":
             continue
         print(i, end='\r')
         cv2.imshow('press q to quit', img)
-        if cv2.waitKey(100) == ord('q'):
+        if save:
+            out.write(img)
+        if cv2.waitKey(delay) == ord('q'):
             break
+    if save:
+        out.release()

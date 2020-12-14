@@ -128,3 +128,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+sample.mp4
+cvutils/tempCodeRunnerFile.py

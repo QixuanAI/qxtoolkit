@@ -13,7 +13,8 @@ import re
 from datetime import datetime
 from ._inner import *
 
-__all__=["ImagesGetter"]
+__all__ = ["ImagesGetter"]
+
 
 class ImagesGetter(object):
     """
@@ -99,9 +100,23 @@ class ImagesGetter(object):
         if self.autorelease:
             self._release()
 
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.isAvailable:
+            img = self._next(self.interval)
+            for adj in self._adjust:
+                img = adj(img)
+            self._out_count += 1
+            return img
+        if self.autorelease:
+            self._release()
+        raise StopIteration
+
     def get(self) -> np.ndarray:
-        print("[i]Recommoned Usage: directly call this object with brackets ending." +
-              " Example:\r\nfor img in ImageGetter(0)():\r\n\tcv2.imshow('win', img)")
+        print("[i]Recommoned Usage: directly call this object." +
+              " Example:\r\nig = ImageGetter(0)\r\nfor img in ig:\r\n\tcv2.imshow('win', img)")
         return self()
 
     def reset(self):
@@ -211,7 +226,7 @@ if __name__ == "__main__":
     getter = ImagesGetter(0, cam_warmup=0)
     cv2.namedWindow('press q to quit', cv2.WINDOW_NORMAL)
 
-    for i, img in enumerate(getter()):
+    for i, img in enumerate(getter):
         if img is None:
             print(i, ' - None to show')
             continue

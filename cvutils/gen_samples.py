@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 '''
 Description: 
-FilePath: \cvutils\cvutils\gen_samples.py
+FilePath: /cvutils/cvutils/gen_samples.py
 Author: qxsoftware@163.com
 Date: 2020-10-30 14:16:55
-LastEditTime: 2020-12-14 22:46:33
+LastEditTime: 2020-12-15 09:33:22
 Refer to: https://github.com/QixuanAI
 '''
 from matplotlib import pyplot as plt
@@ -15,7 +15,6 @@ import numpy as np
 from pathlib import Path
 from warnings import warn
 from datetime import datetime
-from ._inner import FOURCC_CODEC
 
 __all__ = ["gen_gray_level_calib_imgs", "gen_rgb_level_calib_imgs"]
 
@@ -102,32 +101,33 @@ def gen_rgb_level_calib_imgs(bits=8):
             img[maxval-i*2-1, :, c] = maxval-1
 
 
-def gen_rgb_spiral_curve_imgs(bits=8):
-    # todo
-    # 绘制等角螺线
+def gen_rgb_spiral_curve_imgs(speed=0.5, angle=-5, circleCount=100, smooth=100, bits=8):
+    """
+    绘制等角螺线
+    @speed:转速
+    @angle:等角螺线偏离角度
+    @circleCount:结束时的总圈数
+    @smooth:螺线的光滑程度，值越大越光滑
+    @bits:图像位数
+    """
     maxval, shape, dtype = _get_param(bits, 3)
     center = (shape[0]//2, shape[1]//2)  # 中心坐标
-    angle = np.radians(85)  # 螺线固定角度，大于90度为顺时针，小于为逆时针
-    # circle_num=8 # 圈数
-    # phase = 0
-    for i in range(10000):  # 初始相位
-        circle_num = min(1+i/100, 10)
-        phase = i/500
+    rad = np.radians(90+angle)  # 螺线固定角度，大于90度为顺时针，小于为逆时针
+    for i in range(circleCount*100):
+        circle_num = 1+speed*i/100  # 圈数
+        phase = speed*i/500  # 初始相位
         # 极坐标
-        theta = np.linspace(0, circle_num*2*np.pi, 5000)+phase*2*np.pi  # 角度
-        r = angle*np.exp(theta/np.tan(angle))  # 距离
+        theta = np.linspace(0, circle_num*2*np.pi,
+                            int(circle_num*smooth))+phase*2*np.pi  # 角度
+        r = rad*np.exp(theta/np.tan(rad))  # 距离
         # 极坐标转直角坐标
-        x = r*np.cos(theta)+center[0]
-        y = r*np.sin(theta)-center[1]
+        x = r*np.cos(theta)
+        y = r*np.sin(theta)
         img = np.zeros(shape, dtype=dtype)
-        # plt.plot(x,y)
-        # plt.show()
-        scale = (maxval+10)/(x.max()-x.min())
-        x -= x.min()
-        y -= y.min()
-        x *= scale
-        y *= scale
-        h, s, v = 128*np.sin(phase)+128, 255, 255
+        scale = (maxval/2.1)/r.max()
+        x = x*scale+center[0]
+        y = y*scale+center[1]
+        h, s, v = 128-128*np.cos(phase), 255, 255
         pts = np.stack((x.astype(np.int), y.astype(np.int)), -1)
         img = cv2.polylines(img, [pts], False, (h, s, v), thickness=2)
         img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
@@ -136,9 +136,10 @@ def gen_rgb_spiral_curve_imgs(bits=8):
 
 if __name__ == "__main__":
     import sys
+    from _inner import FOURCC_CODEC
     getter = gen_rgb_spiral_curve_imgs
     delay = 1
-    save = False
+    save = True
     if save:
         path = "sample.mp4"
         fourcc = cv2.VideoWriter_fourcc(*FOURCC_CODEC["small"][0])

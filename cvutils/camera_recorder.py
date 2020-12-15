@@ -4,7 +4,7 @@ Description: A simple video recorder, support Windows and Linux.
 Requirments: opencv-python>=4.2.0.34, numpy
 Author: qxsoftware@163.com
 Date: 2020-10-14 08:29:17
-LastEditTime: 2020-12-03 09:57:00
+LastEditTime: 2020-12-14 16:06:04
 Refer to: https://github.com/QixuanAI
 '''
 
@@ -265,8 +265,6 @@ def cam_record(args):
                     # cv2.destroyWindow(WIN_NAME)
                     new_title = "Cam {} | {}".format(cam.ID, WIN_NAME)
                     cv2.setWindowTitle(WIN_NAME, new_title)
-                    # init_window(WIN_NAME, args.fixedsize, get_proper_size(
-                    #     cam_w, cam_h), cam, cam_ids, pressed-ord('0'))
                     cv2.setTrackbarPos(
                         "Change Camera:", WIN_NAME, pressed-ord('0'))
                     cv2.displayOverlay(

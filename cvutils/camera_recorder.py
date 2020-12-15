@@ -4,7 +4,7 @@ Description: A simple video recorder, support Windows and Linux.
 Requirments: opencv-python>=4.2.0.34, numpy
 Author: qxsoftware@163.com
 Date: 2020-10-14 08:29:17
-LastEditTime: 2020-12-14 16:06:04
+LastEditTime: 2020-12-15 10:40:37
 Refer to: https://github.com/QixuanAI
 '''
 
@@ -17,10 +17,10 @@ from pathlib import Path
 from warnings import warn
 from datetime import datetime
 
-__all__=["cam_record","parse_args","VERSION"]
+__all__=["cam_record","start_with_args","parse_args","__version__"]
 
 
-VERSION = "1.0.0"
+__version__ = "1.0.0"
 
 CODEC = {
     "small": ["mp4v", '.mp4'],
@@ -308,6 +308,8 @@ def parse_args():
                         action='store_true', help="Show version.")
     return parser.parse_args()
 
+def start_with_args():
+    cam_record(parse_args())
 
 if __name__ == "__main__":
     args = parse_args()

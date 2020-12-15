@@ -4,7 +4,7 @@ Description:
 FilePath: /cvutils/cvutils/gen_samples.py
 Author: qxsoftware@163.com
 Date: 2020-10-30 14:16:55
-LastEditTime: 2020-12-15 10:01:12
+LastEditTime: 2020-12-15 10:34:50
 Refer to: https://github.com/QixuanAI
 '''
 import os
@@ -15,7 +15,12 @@ from pathlib import Path
 from warnings import warn
 from datetime import datetime
 
-__all__ = ["gen_gray_level_calib_imgs", "gen_rgb_level_calib_imgs"]
+__all__ = [
+    "gen_gray_level_calib_imgs",
+    "gen_rgb_level_calib_imgs",
+    "gen_rgb_spiral_curve_imgs",
+    "gen_rgb_lissajous_curve_imgs",
+]
 
 
 def _get_param(bits, channel):
@@ -114,7 +119,7 @@ def gen_rgb_spiral_curve_imgs(speed=0.5, angle=-5, circleCount=100, smooth=100, 
     rad = np.radians(90+angle)  # 螺线固定角度，大于90度为顺时针，小于为逆时针
     for i in range(circleCount*100):
         circle_num = 1+speed*i/100  # 圈数
-        phase = speed*i/500  # 初始相位
+        phase = speed*i/500  # 相位
         # 极坐标
         theta = np.linspace(0, circle_num*2*np.pi,
                             int(circle_num*smooth))+phase*2*np.pi  # 角度
@@ -122,12 +127,30 @@ def gen_rgb_spiral_curve_imgs(speed=0.5, angle=-5, circleCount=100, smooth=100, 
         # 极坐标转直角坐标
         x = r*np.cos(theta)
         y = r*np.sin(theta)
-        img = np.zeros(shape, dtype=dtype)
         scale = (maxval/2.1)/r.max()
         x = x*scale+center[0]
         y = y*scale+center[1]
         h, s, v = 128-128*np.cos(phase), 255, 255
         pts = np.stack((x.astype(np.int), y.astype(np.int)), -1)
+        img = np.zeros(shape, dtype=dtype)
+        img = cv2.polylines(img, [pts], False, (h, s, v), thickness=2)
+        img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+        yield img
+
+
+def gen_rgb_lissajous_curve_imgs(freq=5.0, randFreq=True, cycles=3, smooth=500, bits=8):
+    maxval, shape, dtype = _get_param(bits, 3)
+    center = (shape[0]//2, shape[1]//2)  # 中心坐标
+    if randFreq:
+        freq *= np.random.rand()
+    for i in range(10000):
+        phase = i/100  # 相位
+        t = np.linspace(0, cycles*2*np.pi, smooth)
+        x = maxval/2*np.sin(t)+center[0]
+        y = maxval/2*np.sin(t*freq+phase)+center[1]
+        h, s, v = 128-128*np.cos(phase/freq), 255, 255
+        pts = np.stack((x.astype(np.int), y.astype(np.int)), -1)
+        img = np.zeros(shape, dtype=dtype)
         img = cv2.polylines(img, [pts], False, (h, s, v), thickness=2)
         img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
         yield img
@@ -136,7 +159,7 @@ def gen_rgb_spiral_curve_imgs(speed=0.5, angle=-5, circleCount=100, smooth=100, 
 if __name__ == "__main__":
     import sys
     from _inner import FOURCC_CODEC
-    getter = gen_rgb_spiral_curve_imgs
+    getter = gen_rgb_lissajous_curve_imgs
     delay = 1
     save = True
     if save:

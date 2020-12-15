@@ -4,10 +4,9 @@ Description:
 FilePath: /cvutils/cvutils/gen_samples.py
 Author: qxsoftware@163.com
 Date: 2020-10-30 14:16:55
-LastEditTime: 2020-12-15 09:33:22
+LastEditTime: 2020-12-15 10:01:12
 Refer to: https://github.com/QixuanAI
 '''
-from matplotlib import pyplot as plt
 import os
 import cv2
 import argparse

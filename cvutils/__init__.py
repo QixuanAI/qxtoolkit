@@ -4,7 +4,7 @@ Description :
 FilePath    : /cvutils/cvutils/__init__.py
 Author      : qxsoftware@163.com
 Date        : 2020-12-14 16:04:47
-LastEditTime: 2020-12-25 13:54:47
+LastEditTime: 2020-12-25 15:21:39
 Refer to    : https://github.com/QixuanAI
 '''
 

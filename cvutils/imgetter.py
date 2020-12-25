@@ -4,7 +4,7 @@ Description : Get seriese of images from either a camera device, a video file or
 FilePath    : /cvutils/cvutils/imgetter.py
 Author      : qxsoftware@163.com
 Date        : 2020-09-25 16:51:21
-LastEditTime: 2020-12-25 15:16:53
+LastEditTime: 2020-12-25 15:22:18
 Refer to    : https://github.com/QixuanAI/cvutils
 '''
 
@@ -227,9 +227,9 @@ class ImagesGetter(object):
         self._release = lambda: None
 
 
-def main():
+def main(src=None):
     import sys
-    src = 0
+    src = 0 if src is None else src
     if len(sys.argv) > 1:
         src = sys.argv[1]
     getter = ImagesGetter(src, cam_warmup=0)

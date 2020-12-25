@@ -4,7 +4,7 @@ Description : Get seriese of images from either a camera device, a video file or
 FilePath    : /cvutils/cvutils/imgetter.py
 Author      : qxsoftware@163.com
 Date        : 2020-09-25 16:51:21
-LastEditTime: 2020-12-25 14:14:35
+LastEditTime: 2020-12-25 15:16:53
 Refer to    : https://github.com/QixuanAI/cvutils
 '''
 
@@ -14,9 +14,9 @@ import os
 import glob
 import re
 from datetime import datetime
-try: # for package import
+try:  # for package import
     from ._inner import *
-except: # for directly running
+except:  # for directly running
     from _inner import *
 
 __all__ = ["ImagesGetter"]
@@ -227,16 +227,19 @@ class ImagesGetter(object):
         self._release = lambda: None
 
 
-if __name__ == "__main__":
+def main():
     import sys
-    getter = ImagesGetter(0, cam_warmup=0)
-    WIN_NAME='press q to quit'
+    src = 0
+    if len(sys.argv) > 1:
+        src = sys.argv[1]
+    getter = ImagesGetter(src, cam_warmup=0)
+    WIN_NAME = 'press q to quit'
     cv2.namedWindow(WIN_NAME, cv2.WINDOW_NORMAL)
 
     for i, img in enumerate(getter):
         if img is None:
             print(i, ' - None to show')
-            continue
+            break
         print(i, end='\r')
         cv2.imshow(WIN_NAME, img)
         pressed = cv2.waitKey(1)
@@ -246,3 +249,7 @@ if __name__ == "__main__":
             path = "IMG_"+datetime.now().strftime("%Y%m%d-%H%M%S")+'.jpg'
             cv2.imwrite(path, img)
             cv2.displayStatusBar(WIN_NAME, 'Save photo to:\n'+path, 3000)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,12 @@
 #! /usr/bin/env python
-# by qxsoftware@163.com, 2020-10-27
-# refer to https://github.com/QixuanAI/cvutils
+'''
+Description : 
+FilePath    : /cvutils/cvutils/schedule.py
+Author      : qxsoftware@163.com
+Date        : 2020-10-27 08:21:04
+LastEditTime: 2020-12-25 14:06:11
+Refer to    : https://github.com/QixuanAI
+'''
 
 from datetime import datetime, timedelta
 

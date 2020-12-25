@@ -1,9 +1,12 @@
 #! /usr/bin/env python
-# Get seriese of images from either a camera device, a video file or a folder of images.
-# author:liuqixuan
-# date:2020/9/25
-# email:qxsoftware@163.com
-# url:https://github.com/QixuanAI/cvutils
+'''
+Description : Get seriese of images from either a camera device, a video file or a folder of images.
+FilePath    : /cvutils/cvutils/imgetter.py
+Author      : qxsoftware@163.com
+Date        : 2020-09-25 16:51:21
+LastEditTime: 2020-12-25 14:14:35
+Refer to    : https://github.com/QixuanAI/cvutils
+'''
 
 import cv2
 import numpy as np
@@ -11,7 +14,10 @@ import os
 import glob
 import re
 from datetime import datetime
-from ._inner import *
+try: # for package import
+    from ._inner import *
+except: # for directly running
+    from _inner import *
 
 __all__ = ["ImagesGetter"]
 
@@ -224,13 +230,19 @@ class ImagesGetter(object):
 if __name__ == "__main__":
     import sys
     getter = ImagesGetter(0, cam_warmup=0)
-    cv2.namedWindow('press q to quit', cv2.WINDOW_NORMAL)
+    WIN_NAME='press q to quit'
+    cv2.namedWindow(WIN_NAME, cv2.WINDOW_NORMAL)
 
     for i, img in enumerate(getter):
         if img is None:
             print(i, ' - None to show')
             continue
         print(i, end='\r')
-        cv2.imshow('press q to quit', img)
-        if cv2.waitKey(1) == ord('q'):
+        cv2.imshow(WIN_NAME, img)
+        pressed = cv2.waitKey(1)
+        if pressed == ord('q'):
             break
+        elif pressed == ord('s'):
+            path = "IMG_"+datetime.now().strftime("%Y%m%d-%H%M%S")+'.jpg'
+            cv2.imwrite(path, img)
+            cv2.displayStatusBar(WIN_NAME, 'Save photo to:\n'+path, 3000)

@@ -1,14 +1,17 @@
 #! /usr/bin/env python
 '''
-Description: 
-FilePath: /cvutils/cvutils/graffiti.py
-Author: qxsoftware@163.com
-Date: 2020-10-26 15:13:20
-LastEditTime: 2020-12-03 10:12:30
-Refer to: https://github.com/QixuanAI
+Description : 
+FilePath    : /cvutils/cvutils/graffiti.py
+Author      : qxsoftware@163.com
+Date        : 2020-10-26 15:13:20
+LastEditTime: 2020-12-25 14:13:44
+Refer to    : https://github.com/QixuanAI
 '''
 import cv2
-from ._inner import *
+try:
+    from ._inner import *
+except:
+    from _inner import *
 
 __all__=["Graffiti","MotionGraffiti"]
 """Still on working"""

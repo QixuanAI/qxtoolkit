@@ -5,7 +5,7 @@ Requirments : opencv-python>=4.2.0.34, numpy
 FilePath    : /cvutils/cvutils/camera_recorder.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-14 08:29:17
-LastEditTime: 2020-12-25 13:56:55
+LastEditTime: 2020-12-25 14:48:57
 Refer to    : https://github.com/QixuanAI
 '''
 
@@ -21,7 +21,7 @@ from datetime import datetime
 __all__ = ["cam_record", "cam_record_cmd", "__version__"]
 
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 CODEC = {
     "small": ["mp4v", '.mp4'],
@@ -376,7 +376,7 @@ def cam_record_cmd():
     if args.version:
         print(VERSION)
         exit()
-    cam_record(args.cam_ids, True, "./save.mp4", args.quality,
+    cam_record(args.cam_ids, args.record, args.saveto, args.quality,
                args.interval, args.flip, args.fixedsize)
 
 

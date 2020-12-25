@@ -1,11 +1,12 @@
 #! /usr/bin/env python
 '''
-Description: A simple video recorder, support Windows and Linux.
-Requirments: opencv-python>=4.2.0.34, numpy
-Author: qxsoftware@163.com
-Date: 2020-10-14 08:29:17
-LastEditTime: 2020-12-15 10:40:37
-Refer to: https://github.com/QixuanAI
+Description : A simple video recorder, support Windows and Linux.
+Requirments : opencv-python>=4.2.0.34, numpy
+FilePath    : /cvutils/cvutils/camera_recorder.py
+Author      : qxsoftware@163.com
+Date        : 2020-10-14 08:29:17
+LastEditTime: 2020-12-25 13:56:55
+Refer to    : https://github.com/QixuanAI
 '''
 
 import os
@@ -17,10 +18,10 @@ from pathlib import Path
 from warnings import warn
 from datetime import datetime
 
-__all__=["cam_record","start_with_args","parse_args","__version__"]
+__all__ = ["cam_record", "cam_record_cmd", "__version__"]
 
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 CODEC = {
     "small": ["mp4v", '.mp4'],
@@ -29,6 +30,13 @@ CODEC = {
 }
 
 WIN_NAME = "Press h for help"
+MAX_TRY_ON_WINDOWS = 20
+HELP_MSG = """Keyboard shortcuts:
+q - quit
+s - save picture
+0~{CamCount} - Change camera device
+k - keep current resolution ratio({KeepResol})
+h - Show this help"""
 
 
 def get_media_folder():
@@ -59,6 +67,42 @@ def get_media_folder():
 
 
 PICTURE, VIDEO = get_media_folder()
+
+
+def adjustSize(img, dw, dh, sw=None, sh=None, adjType='auto'):
+    """
+    Adjust image size from (sw, sh) to (dw, dh).
+    adjType: fit, padding, rotatefit, rotatepadding, auto
+    """
+    if sw is None:
+        sw = img.shape[1]
+    if sh is None:
+        sh = img.shape[0]
+    dratio = dw/dh
+    sratio = sw/sh
+    if adjType == 'auto':
+        # todo: intelligence auto adjust, include find-up-direction, alignment, etc.
+        adjType = 'padding'
+    if 'rotate' in adjType and (sratio-1)*(dratio-1) < 0:
+        img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        return adjustSize(img, dw, dh, sh, sw, adjType.replace('rotate', ''))
+    elif 'padding' in adjType:
+        if sratio < dratio:
+            dhr = dh
+            dwr = int(dhr*sratio)
+            t = b = 0
+            l = r = (dw-dwr)//2
+        else:
+            dwr = dw
+            dhr = int(dwr/sratio+0.5)
+            l = r = 0
+            t = b = (dh-dhr)//2
+        img = cv2.resize(img, (dwr, dhr))
+        img = cv2.copyMakeBorder(img, t, b, l, r, cv2.BORDER_CONSTANT, value=0)
+        return adjustSize(img, dw, dh, img.shape[1], img.shape[0], adjType.replace('padding', ''))
+    # Precisely fit the dst size
+    img = cv2.resize(img, (dw, dh))
+    return img
 
 
 class VideoCapture:
@@ -115,15 +159,24 @@ class VideoWriter:
     writer = None
 
     def __init__(self, path, fourcc: str, fps, size):
+        self.path = Path(path)
+        self.path.parent.mkdir(exist_ok=True)
         self.path = str(path)
-        os.makedirs(os.path.dirname(self.path), exist_ok=True)
-        fourcc = cv2.VideoWriter_fourcc(*fourcc)
+        if isinstance(fourcc, str) or isinstance(fourcc, list) or isinstance(fourcc, tuple):
+            fourcc = cv2.VideoWriter_fourcc(*fourcc)
+        elif isinstance(fourcc, int):
+            pass
+        else:
+            warn("Unvalid fourcc type:" + type(fourcc) + ', value:' + str(fourcc))
         self.fps = fps
         self.size = size
         self.writer = cv2.VideoWriter(self.path, fourcc, self.fps, self.size)
         assert self.writer, "Can't initialize VideoWriter."
 
     def write(self, frame):
+        h, w, _ = frame.shape
+        if self.size != (w, h):
+            frame = adjustSize(frame, *self.size, w, h, adjType='auto')
         self.writer.write(frame)
 
     def release(self):
@@ -142,7 +195,7 @@ def get_camera_ids(candidate_ids=[]):
             candidate_ids = [int(x.name[5:])
                              for x in Path("/dev").glob("video*")]
         elif sys.platform == 'win32':
-            candidate_ids = list(range(20))
+            candidate_ids = list(range(MAX_TRY_ON_WINDOWS))
     for d in candidate_ids:
         try:
             cam = cv2.VideoCapture(d)
@@ -206,31 +259,31 @@ def init_window(fixed: bool, size, cam: VideoCapture, cam_ids, cam_idx, text="In
     return True
 
 
-def cam_record(args):
-    cam_ids = get_camera_ids(args.cam_ids)
+def cam_record(cam_ids=None, record=False,
+               saveto='./record.avi', quality='normal',
+               interval=0, flip=False, fixedsize=False):
+    global HELP_MSG
+    cam_ids = get_camera_ids(cam_ids)
     if not cam_ids:
         raise RuntimeError("Can't find any available cameras.")
     cam_id = cam_ids[0]
-    itval = int(args.interval)
-    HELP_MSG = "Keyboard shortcuts:\nq - quit\ns - save picture" + \
-        "\n0~{} - Change camera device\n\n".format(min(9, len(cam_ids))) +\
-        "h - Show this help"
+    itval = int(interval)
     cam = VideoCapture(cam_id)
     if not cam.isOpened():
         raise RuntimeError("Can't open camera, device id: %d" % cam_id)
     fps = cam.FPS if itval == 0 else 1000/itval
     cam_w, cam_h = cam.shape
-
-    if args.record:
-        saveto = Path(args.saveto)
-        fourcc, suffix = CODEC[args.quality]
+    KeepResol = False
+    if record:
+        saveto = Path(saveto)
+        fourcc, suffix = CODEC[quality]
         if not saveto.suffix:  # Suppose to be a dictionary
             saveto = saveto / "VID_cam{}_{}{}".format(
                 cam.ID, datetime.now().strftime("%Y%m%d-%H%M%S"), suffix)
         elif saveto.suffix != suffix:
-            warn("Fourcc codec '" + fourcc + "' does't match suffix " + path.suffix +
-                 ", change save path to" + path.with_suffix(suffix))
-            path = path.with_suffix(fourcc)
+            warn("Fourcc codec '" + fourcc + "' does't match suffix '" + saveto.suffix
+                 + "', change save path to " + str(saveto.with_suffix(suffix)))
+            saveto = saveto.with_suffix(suffix)
         out = VideoWriter(saveto, fourcc, fps, (cam_w, cam_h))
         print("Save to", out.path)
         itval = 1
@@ -238,13 +291,15 @@ def cam_record(args):
         out = FakeWriter()
         itval = int(1000/fps if itval == 0 else itval)
     try:
-        init_window(args.fixedsize, get_proper_size(
+        init_window(fixedsize, get_proper_size(
             cam_w, cam_h), cam, cam_ids, 0)
         while cam.isOpened():
             ret, frame = cam.read()
             if ret and frame.shape > (0, 0):
-                if args.flip:
+                if flip:
                     frame = cv2.flip(frame, 1)
+                if KeepResol:
+                    frame = adjustSize(frame, cam_w, cam_h)
                 cv2.imshow(WIN_NAME, frame)
             else:
                 warn("[!]No responding from camera " + str(cam.ID))
@@ -254,6 +309,7 @@ def cam_record(args):
             # Close Button Clicked
             if cv2.getWindowProperty(WIN_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
+            # Handle with Key pressing
             if pressed == ord('q'):
                 break
             elif 0 <= pressed-ord('0') < min(10, len(cam_ids)):
@@ -272,9 +328,19 @@ def cam_record(args):
                 else:
                     cv2.displayOverlay(
                         WIN_NAME, "Fail to change camera " + str(new_id), 2000)
-
+            elif pressed == ord('k'):
+                KeepResol = not KeepResol
+                if KeepResol:
+                    cam_w, cam_h = cam.shape
+                    cv2.displayStatusBar(
+                        WIN_NAME, "Keep current rosolution ratio: %dx%d" % (cam_w, cam_h), 3000)
+                else:
+                    cv2.displayStatusBar(
+                        WIN_NAME, "Restor rosolution ratio to %dx%d" % (cam.width, cam.height), 3000)
             elif pressed == ord('h'):
-                cv2.displayOverlay(WIN_NAME, HELP_MSG, 5000)
+                helpMsg = HELP_MSG.format(
+                    CamCount=min(9, len(cam_ids)), KeepResol='ON' if KeepResol else 'OFF')
+                cv2.displayOverlay(WIN_NAME, helpMsg, 5000)
             elif pressed == ord('s'):
                 path = os.path.join(
                     PICTURE, "IMG_cam"+str(cam_id) + datetime.now().strftime("%Y%m%d-%H%M%S")+'.jpg')
@@ -286,7 +352,7 @@ def cam_record(args):
         cv2.destroyAllWindows()
 
 
-def parse_args():
+def cam_record_cmd():
     DEFAULT_SAVE_TO = VIDEO
     parser = argparse.ArgumentParser(
         description='A Simple Video VideoWriter with Camera, support Windows and Linux.')
@@ -306,14 +372,13 @@ def parse_args():
                         help='Fixed preview windows in original size rather than fit the screen.')
     parser.add_argument('-V', '--version',
                         action='store_true', help="Show version.")
-    return parser.parse_args()
-
-def start_with_args():
-    cam_record(parse_args())
-
-if __name__ == "__main__":
-    args = parse_args()
+    args = parser.parse_args()
     if args.version:
         print(VERSION)
         exit()
-    cam_record(args)
+    cam_record(args.cam_ids, True, "./save.mp4", args.quality,
+               args.interval, args.flip, args.fixedsize)
+
+
+if __name__ == "__main__":
+    cam_record_cmd()

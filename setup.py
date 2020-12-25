@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 '''
-Description: 
-FilePath: /cvutils/setup.py
-Author: qxsoftware@163.com
-Date: 2020-12-03 09:26:14
-LastEditTime: 2020-12-15 10:41:43
-Refer to: https://github.com/QixuanAI
+Description : 
+FilePath    : /cvutils/setup.py
+Author      : qxsoftware@163.com
+Date        : 2020-12-03 09:26:14
+LastEditTime: 2020-12-25 13:55:43
+Refer to    : https://github.com/QixuanAI
 '''
 
 from cvutils import __version__
@@ -21,5 +21,5 @@ setup(
     author="LiuQixuan",
     author_email="qxairobot@163.com",
     packages=find_packages(exclude=["logs", "test*", "temp"]),
-    install_requires=["numpy","opencv-python"],
+    install_requires=["numpy", "opencv-python"],
 )

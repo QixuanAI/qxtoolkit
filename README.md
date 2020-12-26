@@ -15,7 +15,7 @@ bash ./pip_install_atonce.sh
 
 Run camera recorder example from terminal:
 ```bash
-python -m qxtoolkit.camera_recorder
+python -m qxtoolkit.cam_record
 ```
 
 Run image getter example from terminal:

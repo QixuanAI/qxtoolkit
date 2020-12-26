@@ -2,10 +2,10 @@
 '''
 Description : A simple video recorder, support Windows and Linux.
 Requirments : opencv-python>=4.2.0.34, numpy
-FilePath    : /qxtoolkit/qxtoolkit/camera_recorder.py
+FilePath    : /qxtoolkit/qxtoolkit/cam_record.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-14 08:29:17
-LastEditTime: 2020-12-26 13:56:58
+LastEditTime: 2020-12-26 14:20:44
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 

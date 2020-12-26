@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 '''
 Description : 
-FilePath    : /cvutils/cvutils/gen_samples.py
+FilePath    : /qxtoolkit/qxtoolkit/gen_samples.py
 Author      : qxsoftware@163.com
 Date        : 2020-12-15 08:36:25
-LastEditTime: 2020-12-25 14:03:00
-Refer to    : https://github.com/QixuanAI
+LastEditTime: 2020-12-26 13:57:09
+Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 import os
 import cv2

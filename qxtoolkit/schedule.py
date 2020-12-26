@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 '''
 Description : 
-FilePath    : /cvutils/cvutils/schedule.py
+FilePath    : /qxtoolkit/qxtoolkit/schedule.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-27 08:21:04
-LastEditTime: 2020-12-25 14:06:11
-Refer to    : https://github.com/QixuanAI
+LastEditTime: 2020-12-26 13:57:37
+Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
 from datetime import datetime, timedelta

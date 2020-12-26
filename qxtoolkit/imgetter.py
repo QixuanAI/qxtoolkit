@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 '''
 Description : Get seriese of images from either a camera device, a video file or a folder of images.
-FilePath    : /cvutils/cvutils/imgetter.py
+FilePath    : /qxtoolkit/qxtoolkit/imgetter.py
 Author      : qxsoftware@163.com
 Date        : 2020-09-25 16:51:21
-LastEditTime: 2020-12-25 15:22:18
-Refer to    : https://github.com/QixuanAI/cvutils
+LastEditTime: 2020-12-26 13:57:29
+Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
 import cv2

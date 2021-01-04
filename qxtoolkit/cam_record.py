@@ -5,7 +5,7 @@ Requirments : opencv-python>=4.2.0.34, numpy
 FilePath    : /qxtoolkit/qxtoolkit/cam_record.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-14 08:29:17
-LastEditTime: 2020-12-26 14:20:44
+LastEditTime: 2021-01-04 16:04:53
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
@@ -32,11 +32,17 @@ CODEC = {
 WIN_NAME = "Press h for help"
 MAX_TRY_ON_WINDOWS = 20
 HELP_MSG = """Keyboard shortcuts:
-q - quit
-s - save picture
-0~{CamCount} - Change camera device
-k - keep current resolution ratio({KeepResol})
-h - Show this help"""
+q - Quit
+s - Save Picture
+0~{CamCount} - Change camera device 
+k - Keep Current Resolution Ratio({KeepResol})
+←↓↑→ - Adjust Pan & Tilt
++- - Zoom In/Out
+h - Show This Help"""
+
+ZoomResol = 100
+PanResol = 10000
+TiltResol = 10000
 
 
 def get_media_folder():
@@ -115,6 +121,12 @@ class VideoCapture:
 
     def read(self):
         return self.cam.read()
+
+    def set(self, propId, value):
+        return self.cam.set(propId, value)
+
+    def get(self, propId):
+        return self.cam.get(propId)
 
     @property
     def shape(self):
@@ -252,8 +264,9 @@ def init_window(fixed: bool, size, cam: VideoCapture, cam_ids, cam_idx, text="In
     title = "Cam {} | {}".format(cam.ID, WIN_NAME)
     cv2.setWindowTitle(WIN_NAME, title)
     cv2.resizeWindow(WIN_NAME, *size)
-    cv2.createTrackbar("Change Camera:", WIN_NAME, cam_idx,
-                       len(cam_ids)-1, changeCamera)
+    if len(cam_ids) > 1:
+        cv2.createTrackbar("Change Camera:", WIN_NAME, cam_idx,
+                           len(cam_ids)-1, changeCamera)
     cv2.imshow(WIN_NAME, welcom)
     cv2.waitKey(1000)
     return True
@@ -339,13 +352,39 @@ def cam_record(cam_ids=None, record=False,
                         WIN_NAME, "Restor rosolution ratio to %dx%d" % (cam.width, cam.height), 3000)
             elif pressed == ord('h'):
                 helpMsg = HELP_MSG.format(
-                    CamCount=min(9, len(cam_ids)), KeepResol='ON' if KeepResol else 'OFF')
+                    CamCount=min(9, len(cam_ids)-1), KeepResol='ON' if KeepResol else 'OFF')
                 cv2.displayOverlay(WIN_NAME, helpMsg, 5000)
             elif pressed == ord('s'):
                 path = os.path.join(
                     PICTURE, "IMG_cam"+str(cam_id) + datetime.now().strftime("%Y%m%d-%H%M%S")+'.jpg')
                 cv2.imwrite(path, frame)
                 cv2.displayStatusBar(WIN_NAME, 'Save photo to:\n'+path, 3000)
+            elif pressed == ord('+'):
+                zoom = cam.get(cv2.CAP_PROP_ZOOM) + ZoomResol
+                cam.set(cv2.CAP_PROP_ZOOM, zoom)
+                cv2.displayStatusBar(WIN_NAME, 'Zoom:'+str(zoom), 1000)
+            elif pressed == ord('-'):
+                zoom = max(cam.get(cv2.CAP_PROP_ZOOM) - ZoomResol, 0)
+                cam.set(cv2.CAP_PROP_ZOOM, zoom)
+                cv2.displayStatusBar(WIN_NAME, 'Zoom:'+str(zoom), 1000)
+            elif pressed == 81:  # left arrow
+                pan = cam.get(cv2.CAP_PROP_PAN) + PanResol
+                cam.set(cv2.CAP_PROP_PAN, pan)
+                cv2.displayStatusBar(WIN_NAME, 'Pan turn left:'+str(pan), 1000)
+            elif pressed == 83:  # right arrow
+                pan = cam.get(cv2.CAP_PROP_PAN) - PanResol
+                cam.set(cv2.CAP_PROP_PAN, pan)
+                cv2.displayStatusBar(WIN_NAME, 'Pan turn right:'+str(pan), 1000)
+            elif pressed == 82:  # up arrow
+                tilt = cam.get(cv2.CAP_PROP_TILT) + TiltResol
+                cam.set(cv2.CAP_PROP_TILT, tilt)
+                cv2.displayStatusBar(WIN_NAME, 'Tilt turn right:'+str(tilt), 1000)
+            elif pressed == 84:  # down arrow
+                tilt = cam.get(cv2.CAP_PROP_TILT) - TiltResol
+                cam.set(cv2.CAP_PROP_TILT, tilt)
+                cv2.displayStatusBar(WIN_NAME, 'Tilt turn right:'+str(tilt), 1000)
+            elif pressed > 0:
+                print(pressed, chr(pressed))
 
     finally:
         out.release()

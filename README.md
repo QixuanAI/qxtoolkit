@@ -1,6 +1,7 @@
 # QXToolKit
 Some useful utils for computer vision works.
-HomePage:<https://github.com/QixuanAI/qxtoolkit>
+
+[HomePage](https://github.com/QixuanAI/qxtoolkit)
 
 ## Install
 

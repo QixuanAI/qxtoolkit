@@ -413,7 +413,7 @@ def cam_record_cmd():
                         action='store_true', help="Show version.")
     args = parser.parse_args()
     if args.version:
-        print(VERSION)
+        print(__version__)
         exit()
     cam_record(args.cam_ids, args.record, args.saveto, args.quality,
                args.interval, args.flip, args.fixedsize)

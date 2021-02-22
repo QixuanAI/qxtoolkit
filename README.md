@@ -23,3 +23,9 @@ Run image getter example from terminal:
 ```bash
 python -m qxtoolkit.imgetter
 ```
+
+Draw rectangle selector example:
+```bash
+# cd to qxtoolkit/
+python ./Example/selector.py
+```

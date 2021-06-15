@@ -4,7 +4,7 @@ Description :
 FilePath    : /qxtoolkit/qxtoolkit/schedule.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-27 08:21:04
-LastEditTime: 2020-12-26 13:57:37
+LastEditTime: 2021-02-23 08:47:40
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
@@ -47,7 +47,7 @@ class Job:
         if now() >= self._calltime:
             if self._repeat > 0:
                 self._repeat -= 1
-                self._calltime = now()+self._interval
+                self._calltime += self._interval
             self.callback(*self._args)
             if self._repeat == 0:
                 self._finished = True

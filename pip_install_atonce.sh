@@ -1,4 +1,5 @@
 #! /usr/bin/env bash
+rm -rv build/ dist/ qxtoolkit.egg-info/
 python3 setup.py bdist_wheel
 pip3 install -U dist/qxtoolkit*.whl
 rm -rv build/ dist/ qxtoolkit.egg-info/

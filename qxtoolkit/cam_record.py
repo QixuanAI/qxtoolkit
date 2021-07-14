@@ -5,7 +5,7 @@ Requirments : opencv-python>=4.2.0.34, numpy
 FilePath    : /qxtoolkit/qxtoolkit/cam_record.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-14 08:29:17
-LastEditTime: 2021-01-04 16:04:53
+LastEditTime: 2021-07-14 10:16:30
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
@@ -24,9 +24,9 @@ __all__ = ["cam_record", "cam_record_cmd", "__version__"]
 __version__ = "1.1.1"
 
 CODEC = {
-    "small": ["mp4v", '.mp4'],
-    "normal": ["DIVX", '.avi'],
-    "lossless": ["HFYU", '.avi'],
+    "small": ["mp4v", ".mp4"],
+    "normal": ["DIVX", ".avi"],
+    "lossless": ["HFYU", ".avi"],
 }
 
 WIN_NAME = "Press h for help"
@@ -48,24 +48,24 @@ TiltResol = 10000
 def get_media_folder():
     """Return system default picture and video folder"""
     pic, video = "Pictures", "Videos"
-    if sys.platform == 'linux':
-        with open(Path.home()/'.config/user-dirs.dirs') as f:
+    if sys.platform == "linux":
+        with open(Path.home()/".config/user-dirs.dirs") as f:
             for i in f.readlines():
                 i = i.strip()
-                if i.startswith('XDG_PICTURES_DIR'):
-                    pic = i.split('=')[-1].strip("\"'").replace('$HOME', '~')
-                elif i.startswith('XDG_VIDEOS_DIR'):
-                    video = i.split('=')[-1].strip("\"'").replace('$HOME', '~')
-    elif sys.platform == 'win32':
+                if i.startswith("XDG_PICTURES_DIR"):
+                    pic = i.split("=")[-1].strip("\"'").replace("$HOME", "~")
+                elif i.startswith("XDG_VIDEOS_DIR"):
+                    video = i.split("=")[-1].strip("\"'").replace("$HOME", "~")
+    elif sys.platform == "win32":
         import re
         import winreg
         keys = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders')
-        pic = winreg.QueryValueEx(keys, 'My Pictures')[0]
-        video = winreg.QueryValueEx(keys, 'My Video')[0]
-        for name in re.findall('%([^%]+)%', pic):
+            winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders")
+        pic = winreg.QueryValueEx(keys, "My Pictures")[0]
+        video = winreg.QueryValueEx(keys, "My Video")[0]
+        for name in re.findall("%([^%]+)%", pic):
             pic = pic.replace("%"+name+"%", os.environ[name])
-        for name in re.findall('%([^%]+)%', video):
+        for name in re.findall("%([^%]+)%", video):
             video = video.replace("%"+name+"%", os.environ[name])
     pic = Path(pic).expanduser().resolve()
     video = Path(video).expanduser().resolve()
@@ -75,7 +75,7 @@ def get_media_folder():
 PICTURE, VIDEO = get_media_folder()
 
 
-def adjustSize(img, dw, dh, sw=None, sh=None, adjType='auto'):
+def adjustSize(img, dw, dh, sw=None, sh=None, adjType="auto"):
     """
     Adjust image size from (sw, sh) to (dw, dh).
     adjType: fit, padding, rotatefit, rotatepadding, auto
@@ -86,13 +86,13 @@ def adjustSize(img, dw, dh, sw=None, sh=None, adjType='auto'):
         sh = img.shape[0]
     dratio = dw/dh
     sratio = sw/sh
-    if adjType == 'auto':
+    if adjType == "auto":
         # todo: intelligence auto adjust, include find-up-direction, alignment, etc.
-        adjType = 'padding'
-    if 'rotate' in adjType and (sratio-1)*(dratio-1) < 0:
+        adjType = "padding"
+    if "rotate" in adjType and (sratio-1)*(dratio-1) < 0:
         img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        return adjustSize(img, dw, dh, sh, sw, adjType.replace('rotate', ''))
-    elif 'padding' in adjType:
+        return adjustSize(img, dw, dh, sh, sw, adjType.replace("rotate", ""))
+    elif "padding" in adjType:
         if sratio < dratio:
             dhr = dh
             dwr = int(dhr*sratio)
@@ -105,7 +105,7 @@ def adjustSize(img, dw, dh, sw=None, sh=None, adjType='auto'):
             t = b = (dh-dhr)//2
         img = cv2.resize(img, (dwr, dhr))
         img = cv2.copyMakeBorder(img, t, b, l, r, cv2.BORDER_CONSTANT, value=0)
-        return adjustSize(img, dw, dh, img.shape[1], img.shape[0], adjType.replace('padding', ''))
+        return adjustSize(img, dw, dh, img.shape[1], img.shape[0], adjType.replace("padding", ""))
     # Precisely fit the dst size
     img = cv2.resize(img, (dw, dh))
     return img
@@ -179,7 +179,7 @@ class VideoWriter:
         elif isinstance(fourcc, int):
             pass
         else:
-            warn("Unvalid fourcc type:" + type(fourcc) + ', value:' + str(fourcc))
+            warn("Unvalid fourcc type:" + type(fourcc) + ", value:" + str(fourcc))
         self.fps = fps
         self.size = size
         self.writer = cv2.VideoWriter(self.path, fourcc, self.fps, self.size)
@@ -188,7 +188,7 @@ class VideoWriter:
     def write(self, frame):
         h, w, _ = frame.shape
         if self.size != (w, h):
-            frame = adjustSize(frame, *self.size, w, h, adjType='auto')
+            frame = adjustSize(frame, *self.size, w, h, adjType="auto")
         self.writer.write(frame)
 
     def release(self):
@@ -203,10 +203,10 @@ def get_camera_ids(candidate_ids=[]):
     """find availabel cameras on this platform"""
     available_ids = []
     if candidate_ids is None or len(candidate_ids) == 0:
-        if sys.platform == 'linux':
+        if sys.platform == "linux":
             candidate_ids = [int(x.name[5:])
                              for x in Path("/dev").glob("video*")]
-        elif sys.platform == 'win32':
+        elif sys.platform == "win32":
             candidate_ids = list(range(MAX_TRY_ON_WINDOWS))
     for d in candidate_ids:
         try:
@@ -273,7 +273,7 @@ def init_window(fixed: bool, size, cam: VideoCapture, cam_ids, cam_idx, text="In
 
 
 def cam_record(cam_ids=None, record=False,
-               saveto='./record.avi', quality='normal',
+               saveto="./record.avi", quality="normal",
                interval=0, flip=False, fixedsize=False):
     global HELP_MSG
     cam_ids = get_camera_ids(cam_ids)
@@ -323,10 +323,10 @@ def cam_record(cam_ids=None, record=False,
             if cv2.getWindowProperty(WIN_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
             # Handle with Key pressing
-            if pressed == ord('q'):
+            if pressed == ord("q"):
                 break
-            elif 0 <= pressed-ord('0') < min(10, len(cam_ids)):
-                new_id = cam_ids[pressed-ord('0')]
+            elif 0 <= pressed-ord("0") < min(10, len(cam_ids)):
+                new_id = cam_ids[pressed-ord("0")]
                 if new_id == cam.ID:
                     cv2.displayOverlay(
                         WIN_NAME, "Already camra "+str(new_id), 2000)
@@ -335,13 +335,13 @@ def cam_record(cam_ids=None, record=False,
                     new_title = "Cam {} | {}".format(cam.ID, WIN_NAME)
                     cv2.setWindowTitle(WIN_NAME, new_title)
                     cv2.setTrackbarPos(
-                        "Change Camera:", WIN_NAME, pressed-ord('0'))
+                        "Change Camera:", WIN_NAME, pressed-ord("0"))
                     cv2.displayOverlay(
                         WIN_NAME, "Change to camera " + str(cam.ID), 2000)
                 else:
                     cv2.displayOverlay(
                         WIN_NAME, "Fail to change camera " + str(new_id), 2000)
-            elif pressed == ord('k'):
+            elif pressed == ord("k"):
                 KeepResol = not KeepResol
                 if KeepResol:
                     cam_w, cam_h = cam.shape
@@ -350,39 +350,42 @@ def cam_record(cam_ids=None, record=False,
                 else:
                     cv2.displayStatusBar(
                         WIN_NAME, "Restor rosolution ratio to %dx%d" % (cam.width, cam.height), 3000)
-            elif pressed == ord('h'):
+            elif pressed == ord("h"):
                 helpMsg = HELP_MSG.format(
-                    CamCount=min(9, len(cam_ids)-1), KeepResol='ON' if KeepResol else 'OFF')
+                    CamCount=min(9, len(cam_ids)-1), KeepResol="ON" if KeepResol else "OFF")
                 cv2.displayOverlay(WIN_NAME, helpMsg, 5000)
-            elif pressed == ord('s'):
+            elif pressed == ord("s"):
                 path = os.path.join(
-                    PICTURE, "IMG_cam"+str(cam_id) + datetime.now().strftime("%Y%m%d-%H%M%S")+'.jpg')
+                    PICTURE, "IMG_cam"+str(cam_id) + datetime.now().strftime("%Y%m%d-%H%M%S")+".jpg")
                 cv2.imwrite(path, frame)
-                cv2.displayStatusBar(WIN_NAME, 'Save photo to:\n'+path, 3000)
-            elif pressed == ord('+'):
+                cv2.displayStatusBar(WIN_NAME, "Save photo to:\n"+path, 3000)
+            elif pressed == ord("+"):
                 zoom = cam.get(cv2.CAP_PROP_ZOOM) + ZoomResol
                 cam.set(cv2.CAP_PROP_ZOOM, zoom)
-                cv2.displayStatusBar(WIN_NAME, 'Zoom:'+str(zoom), 1000)
-            elif pressed == ord('-'):
+                cv2.displayStatusBar(WIN_NAME, "Zoom:"+str(zoom), 1000)
+            elif pressed == ord("-"):
                 zoom = max(cam.get(cv2.CAP_PROP_ZOOM) - ZoomResol, 0)
                 cam.set(cv2.CAP_PROP_ZOOM, zoom)
-                cv2.displayStatusBar(WIN_NAME, 'Zoom:'+str(zoom), 1000)
+                cv2.displayStatusBar(WIN_NAME, "Zoom:"+str(zoom), 1000)
             elif pressed == 81:  # left arrow
                 pan = cam.get(cv2.CAP_PROP_PAN) + PanResol
                 cam.set(cv2.CAP_PROP_PAN, pan)
-                cv2.displayStatusBar(WIN_NAME, 'Pan turn left:'+str(pan), 1000)
+                cv2.displayStatusBar(WIN_NAME, "Pan turn left:"+str(pan), 1000)
             elif pressed == 83:  # right arrow
                 pan = cam.get(cv2.CAP_PROP_PAN) - PanResol
                 cam.set(cv2.CAP_PROP_PAN, pan)
-                cv2.displayStatusBar(WIN_NAME, 'Pan turn right:'+str(pan), 1000)
+                cv2.displayStatusBar(
+                    WIN_NAME, "Pan turn right:"+str(pan), 1000)
             elif pressed == 82:  # up arrow
                 tilt = cam.get(cv2.CAP_PROP_TILT) + TiltResol
                 cam.set(cv2.CAP_PROP_TILT, tilt)
-                cv2.displayStatusBar(WIN_NAME, 'Tilt turn right:'+str(tilt), 1000)
+                cv2.displayStatusBar(
+                    WIN_NAME, "Tilt turn right:"+str(tilt), 1000)
             elif pressed == 84:  # down arrow
                 tilt = cam.get(cv2.CAP_PROP_TILT) - TiltResol
                 cam.set(cv2.CAP_PROP_TILT, tilt)
-                cv2.displayStatusBar(WIN_NAME, 'Tilt turn right:'+str(tilt), 1000)
+                cv2.displayStatusBar(
+                    WIN_NAME, "Tilt turn right:"+str(tilt), 1000)
             elif pressed > 0:
                 print(pressed, chr(pressed))
 
@@ -393,24 +396,24 @@ def cam_record(cam_ids=None, record=False,
 
 def cam_record_cmd():
     DEFAULT_SAVE_TO = VIDEO
-    parser = argparse.ArgumentParser(
-        description='A Simple Video VideoWriter with Camera, support Windows and Linux.')
-    parser.add_argument('-n', '--cam_ids', nargs="*", type=int,
+    parser = argparse.ArgumentParser(prog="python -m qxtoolkit",
+        description="A simple camera recorder, support Windows, MacOS and Linux.")
+    parser.add_argument("cam_ids", nargs="*", type=int,
                         help="The camera's device IDs, can be either a nuber or serveral numbers separated by space.")
-    parser.add_argument('-r', '--record', action='store_true',
-                        help='Whether to record video to a file or not.')
-    parser.add_argument('-t', '--saveto', default=DEFAULT_SAVE_TO,
-                        help='Where to save the result.')
-    parser.add_argument('-q', '--quality', default='normal', choices=CODEC.keys(),
+    parser.add_argument("-r", "--record", action="store_true",
+                        help="Whether to record video to a file or not.")
+    parser.add_argument("-t", "--saveto", default=DEFAULT_SAVE_TO,
+                        help="Where to save the result.")
+    parser.add_argument("-q", "--quality", default="normal", choices=CODEC.keys(),
                         help="The quality of saved video file, default is lossless.")
-    parser.add_argument('-i', '--interval', default=0,
-                        help='Interval milliseconds between two frames.')
-    parser.add_argument('-f', '--flip', action='store_true',
-                        help='Flip video around vertical axes.')
-    parser.add_argument('-s', '--fixedsize', action='store_true',
-                        help='Fixed preview windows in original size rather than fit the screen.')
-    parser.add_argument('-V', '--version',
-                        action='store_true', help="Show version.")
+    parser.add_argument("-i", "--interval", default=0,
+                        help="Interval milliseconds between two frames.")
+    parser.add_argument("-f", "--flip", action="store_true",
+                        help="Flip video around vertical axes.")
+    parser.add_argument("-s", "--fixedsize", action="store_true",
+                        help="Fixed preview windows in original size rather than fit the screen.")
+    parser.add_argument("-V", "--version",
+                        action="store_true", help="Show version.")
     args = parser.parse_args()
     if args.version:
         print(__version__)

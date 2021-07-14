@@ -4,7 +4,7 @@ Description : Get seriese of images from either a camera device, a video file or
 FilePath    : /qxtoolkit/qxtoolkit/imgetter.py
 Author      : qxsoftware@163.com
 Date        : 2020-09-25 16:51:21
-LastEditTime: 2020-12-26 13:57:29
+LastEditTime: 2021-07-14 09:35:29
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
@@ -227,7 +227,7 @@ class ImagesGetter(object):
         self._release = lambda: None
 
 
-def main(src=None):
+def run(src=None):
     import sys
     src = 0 if src is None else src
     if len(sys.argv) > 1:
@@ -250,6 +250,5 @@ def main(src=None):
             cv2.imwrite(path, img)
             cv2.displayStatusBar(WIN_NAME, 'Save photo to:\n'+path, 3000)
 
-
 if __name__ == "__main__":
-    main()
+    run()

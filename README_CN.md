@@ -1,6 +1,6 @@
 # QXToolKit
 
-一些在机器视觉工作中用得上的小玩意。
+一些在~~机器视觉~~日常工作中用得上的小玩意。
 
 [主页 / English HomePage](https://github.com/QixuanAI/qxtoolkit)
 
@@ -14,13 +14,21 @@
 ## 安装
 
 这个工具包安装起来非常简单，你只需要克隆这个仓库，然后运行一键安装脚本就行（当然前提是您已经配置好了python与pip）。
+### Windows
+```bat
+git clone https://github.com/QixuanAI/qxtoolkit.git
+cd qxtoolkit
+# Install with script
+start .\pip_install_windows.bat
+```
+### Linux
 ```bash
 git clone https://github.com/QixuanAI/qxtoolkit.git
 cd qxtoolkit
 # Install with script
-bash ./pip_install_atonce.sh
+bash ./pip_install_linux.sh
 ```
-如果你想更好地把握安装过程，可以直接打开安装脚本查看：[pip_install_atonce.sh](https://github.com/QixuanAI/qxtoolkit/blob/master/pip_install_atonce.sh)
+如果你想更好地把握安装过程，可以直接打开安装脚本查看：[pip_install_windows.bat](https://github.com/QixuanAI/qxtoolkit/blob/master/pip_install_windows.bat)、[pip_install_linux.sh](https://github.com/QixuanAI/qxtoolkit/blob/master/pip_install_linux.sh)
 
 ## 使用
 使用命令行获取帮助：

@@ -1,8 +1,8 @@
 # QXToolKit
 
-Some useful utils for computer vision works.
+Some useful utils for ~~computer vision~~ daily works.
 
-[HomePage](https://github.com/QixuanAI/qxtoolkit)|[中文](https://github.com/QixuanAI/qxtoolkit/blob/master/README_CN.md)
+[HomePage](https://github.com/QixuanAI/qxtoolkit) | [中文](https://github.com/QixuanAI/qxtoolkit/blob/master/README_CN.md)
 
 ## Prequest
 
@@ -15,13 +15,21 @@ Some useful utils for computer vision works.
 ## Install
 
 It is easy to install this package, you just need to clone the repo and run one-click script.
+### Windows
+```bat
+git clone https://github.com/QixuanAI/qxtoolkit.git
+cd qxtoolkit
+# Install with script
+start .\pip_install_windows.bat
+```
+### Linux
 ```bash
 git clone https://github.com/QixuanAI/qxtoolkit.git
 cd qxtoolkit
 # Install with script
-bash ./pip_install_atonce.sh
+bash ./pip_install_linux.sh
 ```
-Or if you want to take full control of installation, please refer to the content of [pip_install_atonce.sh](https://github.com/QixuanAI/qxtoolkit/blob/master/pip_install_atonce.sh).
+Or if you want to take full control of installation, please refer to the content of [pip_install_windows.bat](https://github.com/QixuanAI/qxtoolkit/blob/master/pip_install_windows.bat) and [pip_install_linux.sh](https://github.com/QixuanAI/qxtoolkit/blob/master/pip_install_linux.sh).
 
 ## Usage
 Get usage from command line:

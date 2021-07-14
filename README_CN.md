@@ -18,7 +18,7 @@
 ```bat
 git clone https://github.com/QixuanAI/qxtoolkit.git
 cd qxtoolkit
-# Install with script
+@REM Install with script
 start .\pip_install_windows.bat
 ```
 ### Linux

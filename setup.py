@@ -4,7 +4,7 @@ Description :
 FilePath    : /qxtoolkit/setup.py
 Author      : qxsoftware@163.com
 Date        : 2020-12-03 09:26:14
-LastEditTime: 2020-12-26 14:08:35
+LastEditTime: 2021-07-14 16:51:45
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
@@ -16,7 +16,7 @@ setup(
     keywords=["qxtoolkit", "qx", "toolkit", "opencv"],
     description="Useful utils for cv working",
     long_description="Useful utils for cv working",
-    license="GNU GENERAL PUBLIC LICENSE v3",
+    license="BSD 3-Clause License",
     url="https://github.com/QixuanAI/qxtoolkit",
     author="LiuQixuan",
     author_email="qxairobot@163.com",

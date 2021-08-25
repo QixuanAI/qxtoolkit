@@ -5,7 +5,7 @@ Requirments : opencv-python>=4.2.0.34, numpy
 FilePath    : /qxtoolkit/qxtoolkit/cam_record.py
 Author      : qxsoftware@163.com
 Date        : 2020-10-14 08:29:17
-LastEditTime: 2021-07-14 10:16:30
+LastEditTime: 2021-08-25 15:26:53
 Refer to    : https://github.com/QixuanAI/qxtoolkit
 '''
 
@@ -241,8 +241,8 @@ def get_proper_size(cam_w, cam_h):
                 pro_w = int(2 * screen_w / 3)
                 # and the proper height can get from ratio.
                 pro_h = int(pro_w / ratio)
-    except:
-        pro_w, pro_h = 0, 0
+    except: # can't import tkinter
+        pro_w, pro_h = cam_w, cam_h
     return pro_w, pro_h
 
 
